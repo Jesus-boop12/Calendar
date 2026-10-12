@@ -44,6 +44,7 @@ private struct TaskSection: Identifiable {
     let tasks: [TaskItem]
 }
 
+@MainActor
 struct TaskListView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(VoiceAssistant.self) private var assistant
@@ -210,6 +211,7 @@ struct TaskRow: View {
     }
 }
 
+@MainActor
 struct TaskEditorView: View {
     let task: TaskItem?
 
@@ -307,6 +309,7 @@ struct TaskEditorView: View {
 
 // MARK: - Reminders (EventKit)
 
+@MainActor
 struct RemindersListView: View {
     @Environment(CalendarService.self) private var calendarService
     @Environment(\.openURL) private var openURL
@@ -425,6 +428,7 @@ struct RemindersListView: View {
     }
 }
 
+@MainActor
 struct ReminderEditorView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(CalendarService.self) private var calendarService

@@ -1,6 +1,7 @@
 import EventKit
 import SwiftUI
 
+@MainActor
 struct EventEditorView: View {
     enum Mode {
         case create(defaultStart: Date)

@@ -1,6 +1,7 @@
 import EventKit
 import SwiftUI
 
+@MainActor
 struct CalendarView: View {
     @Environment(CalendarService.self) private var calendarService
 

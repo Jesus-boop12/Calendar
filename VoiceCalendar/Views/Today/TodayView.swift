@@ -2,6 +2,7 @@ import EventKit
 import SwiftData
 import SwiftUI
 
+@MainActor
 struct TodayView: View {
     private enum QuickAdd: String, Identifiable {
         case event, task, note, reminder
@@ -285,6 +286,7 @@ struct TodayView: View {
 }
 
 /// Presents a fresh note inside its own navigation stack.
+@MainActor
 struct NewNoteSheet: View {
     @Environment(\.modelContext) private var modelContext
     @State private var note: Note?

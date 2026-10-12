@@ -1,6 +1,7 @@
 import SwiftData
 import SwiftUI
 
+@MainActor
 struct NotesView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(VoiceAssistant.self) private var assistant
@@ -116,6 +117,7 @@ struct NotesView: View {
     }
 }
 
+@MainActor
 struct NoteEditorView: View {
     @Bindable var note: Note
     var showsDoneButton = false

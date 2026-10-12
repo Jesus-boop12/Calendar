@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct RootView: View {
     enum Tab: Hashable {
         case today, calendar, tasks, notes, settings

@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct OnboardingView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppSettings.self) private var settings

@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct MicButton: View {
     @Environment(VoiceAssistant.self) private var assistant
     @State private var pulse = false

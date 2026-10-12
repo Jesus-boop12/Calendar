@@ -1,6 +1,7 @@
 import SwiftUI
 
 /// Bottom card showing the live transcript and the assistant's response.
+@MainActor
 struct VoiceOverlayView: View {
     @Environment(VoiceAssistant.self) private var assistant
 

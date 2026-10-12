@@ -194,10 +194,13 @@ struct CommandParser {
                second.hasExplicitTime, second.start > found.start,
                calendar.isDate(second.start, inSameDayAs: found.start) {
                 let before = String(working[..<second.range.lowerBound])
-                if let joiner = Pattern.first("\\b(?:to|until|till|through)\\s*$", in: before) {
+                if Pattern.matches("\\b(?:to|until|till|through)\\s*$", in: before) {
                     parsedDate?.end = second.start
                     working = working.removing(second.range)
-                    working = working.removing(joiner.range)
+                    // Re-search on the updated string: the earlier range is stale after removal.
+                    if let joiner = Pattern.first("\\b(?:to|until|till|through)\\s*$", in: working) {
+                        working = working.removing(joiner.range)
+                    }
                 }
             }
         }
