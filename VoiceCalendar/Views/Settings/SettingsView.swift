@@ -46,11 +46,10 @@ struct SettingsView: View {
                     }
                     Toggle("Speak responses", isOn: $settings.spokenFeedback)
                     Toggle("Prefer on-device recognition", isOn: $settings.preferOnDeviceRecognition)
-                    Toggle("Keep listening in background", isOn: $settings.listenInBackground)
                 } header: {
                     Text("Voice")
                 } footer: {
-                    Text("While the app is open it listens for “\(assistant.wakePhraseDisplay)”. Background listening keeps the microphone on after you leave the app, which uses more battery and shows the orange microphone indicator. On-device recognition is more private and works offline, but may be slightly less accurate.")
+                    Text("While the app is open it listens for “\(assistant.wakePhraseDisplay)”. Listening pauses when you leave the app and resumes when you come back. On-device recognition is more private and works offline, but may be slightly less accurate.")
                 }
 
                 Section {
@@ -121,7 +120,6 @@ struct SettingsView: View {
             }
             .navigationTitle("Settings")
             .onChange(of: settings.wakeWordEnabled) { assistant.settingsChanged() }
-            .onChange(of: settings.listenInBackground) { assistant.settingsChanged() }
             .onChange(of: settings.dailyBriefingEnabled) { assistant.agendaDidChange() }
             .onChange(of: settings.dailyBriefingHour) { assistant.agendaDidChange() }
             .task { await permissions.refresh() }

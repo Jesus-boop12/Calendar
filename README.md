@@ -8,7 +8,7 @@ Built with SwiftUI, SwiftData, EventKit, Speech and UserNotifications. iOS 17+.
 
 | Area | Details |
 | --- | --- |
-| Wake phrase | Listens for “Hey Calendar” (customisable) while the app is open; optional background listening. Tap the mic button to skip the wake phrase. |
+| Wake phrase | Listens for “Hey Calendar” (customisable) while the app is open. Tap the mic button to skip the wake phrase. |
 | Natural language | “add dentist tomorrow at 3 PM for an hour”, “schedule a meeting with Sam on Friday at 10 AM”, “add team standup every weekday at 9 AM”, “add lunch with Sam at Chipotle tomorrow at noon”. |
 | Calendar sync | Events are written to the iPhone calendar through EventKit, so they appear in Apple Calendar and on every device signed into your iCloud/Google/Exchange account. |
 | Reminders | “remind me to call Mom at 6 PM” creates a reminder in the Reminders app. |
@@ -63,17 +63,20 @@ Run the unit tests with **⌘U** (they only need the Simulator).
 
 * **Appearance** — pick one of eight accent palettes (each tuned for light and dark), force light or dark mode or follow the system, and switch to the rounded system typeface.
 * **Wake phrase** — any short phrase; default “Hey Calendar”.
-* **Keep listening in background** — keeps the microphone open after you leave the app (uses the `audio` background mode; the orange microphone indicator stays visible and battery use increases).
 * **Prefer on-device recognition** — private and offline when the device supports it.
 * **Deliver alerts via Calendar & Reminders** — on by default: alarms are attached to the items themselves so iOS delivers them even when the app is closed. Turn it off to have Voice Calendar send its own notifications instead.
 * **Morning briefing** — a notification each morning summarising the day's events and tasks.
 
 ## Limitations and notes
 
-* iOS does not let third-party apps run a true always-on “Hey Siri”-style wake word when the app is not running. The wake phrase works while the app is open, and optionally while it is in the background with the microphone active. It cannot wake the app from a terminated state.
+* iOS does not let third-party apps run a true always-on “Hey Siri”-style wake word when the app is not running. The wake phrase works while the app is open; listening pauses in the background (App Review does not allow the audio background mode for microphone listening) and resumes when the app returns.
 * Speech recognition quality depends on the device, language and (when not on-device) network conditions. The parser is tuned for English phrasing.
 * If Reminders access is denied, spoken reminders are saved as local tasks so nothing is lost.
 * The default calendar for new events is the one set in iOS Settings → Calendar → Default Calendar.
+
+## Publishing
+
+See `SUBMISSION.md` for the App Store checklist, listing copy, review notes and the privacy policy text to host.
 
 ## Ideas for next steps
 

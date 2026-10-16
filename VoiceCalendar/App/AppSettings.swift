@@ -11,7 +11,6 @@ final class AppSettings {
         static let wakePhrase = "wakePhrase"
         static let spokenFeedback = "spokenFeedback"
         static let preferOnDeviceRecognition = "preferOnDeviceRecognition"
-        static let listenInBackground = "listenInBackground"
         static let defaultEventDurationMinutes = "defaultEventDurationMinutes"
         static let eventAlertLeadMinutes = "eventAlertLeadMinutes"
         static let useSystemAlerts = "useSystemAlerts"
@@ -36,8 +35,6 @@ final class AppSettings {
     var spokenFeedback: Bool { didSet { defaults.set(spokenFeedback, forKey: Keys.spokenFeedback) } }
     /// Use on-device speech recognition when the device supports it.
     var preferOnDeviceRecognition: Bool { didSet { defaults.set(preferOnDeviceRecognition, forKey: Keys.preferOnDeviceRecognition) } }
-    /// Keep the microphone open when the app goes to the background.
-    var listenInBackground: Bool { didSet { defaults.set(listenInBackground, forKey: Keys.listenInBackground) } }
     /// Length of an event when no duration is spoken.
     var defaultEventDurationMinutes: Int { didSet { defaults.set(defaultEventDurationMinutes, forKey: Keys.defaultEventDurationMinutes) } }
     /// How long before an event the alert fires.
@@ -68,7 +65,6 @@ final class AppSettings {
             Keys.wakePhrase: AppSettings.defaultWakePhrase,
             Keys.spokenFeedback: true,
             Keys.preferOnDeviceRecognition: true,
-            Keys.listenInBackground: false,
             Keys.defaultEventDurationMinutes: 60,
             Keys.eventAlertLeadMinutes: 15,
             Keys.useSystemAlerts: true,
@@ -84,7 +80,6 @@ final class AppSettings {
         wakePhrase = defaults.string(forKey: Keys.wakePhrase) ?? AppSettings.defaultWakePhrase
         spokenFeedback = defaults.bool(forKey: Keys.spokenFeedback)
         preferOnDeviceRecognition = defaults.bool(forKey: Keys.preferOnDeviceRecognition)
-        listenInBackground = defaults.bool(forKey: Keys.listenInBackground)
         defaultEventDurationMinutes = defaults.integer(forKey: Keys.defaultEventDurationMinutes)
         eventAlertLeadMinutes = defaults.integer(forKey: Keys.eventAlertLeadMinutes)
         useSystemAlerts = defaults.bool(forKey: Keys.useSystemAlerts)

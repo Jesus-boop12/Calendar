@@ -142,7 +142,7 @@ final class VoiceAssistant {
         startWakeWordLoop()
     }
 
-    /// Called when the wake-word toggle or background setting changes.
+    /// Called when the wake-word toggle changes.
     func settingsChanged() {
         if settings.wakeWordEnabled {
             if phase == .off || phase.isError { activateIfPossible() }
@@ -218,7 +218,7 @@ final class VoiceAssistant {
             }
         case .background:
             isInForeground = false
-            if !settings.listenInBackground, mode == .wakeWord {
+            if mode == .wakeWord {
                 speech.stop()
                 restartTask?.cancel()
                 phase = .off
@@ -261,7 +261,7 @@ final class VoiceAssistant {
             try? await Task.sleep(for: delay)
             guard let self, !Task.isCancelled else { return }
             guard self.wantsListening, self.settings.wakeWordEnabled, self.canListen else { return }
-            guard self.isInForeground || self.settings.listenInBackground else { return }
+            guard self.isInForeground else { return }
             if self.consecutiveFailures >= 5 {
                 self.phase = .error("Listening stopped after repeated errors. Tap the microphone to try again.")
                 return
@@ -575,7 +575,7 @@ final class VoiceAssistant {
     private func resumeIdleState() {
         mode = .wakeWord
         lastSeenCommand = ""
-        if settings.wakeWordEnabled, canListen, isInForeground || settings.listenInBackground {
+        if settings.wakeWordEnabled, canListen, isInForeground {
             wantsListening = true
             phase = .waitingForWakeWord
             scheduleRestart(after: .milliseconds(250))
