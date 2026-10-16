@@ -18,6 +18,10 @@ final class AppSettings {
         static let dailyBriefingEnabled = "dailyBriefingEnabled"
         static let dailyBriefingHour = "dailyBriefingHour"
         static let hasCompletedOnboarding = "hasCompletedOnboarding"
+        static let accent = "themeAccent"
+        static let appearance = "appearanceMode"
+        static let useRoundedFont = "useRoundedFont"
+        static let showWakeHint = "showWakeHint"
     }
 
     static let defaultWakePhrase = "Hey Calendar"
@@ -46,6 +50,17 @@ final class AppSettings {
     var dailyBriefingHour: Int { didSet { defaults.set(dailyBriefingHour, forKey: Keys.dailyBriefingHour) } }
     var hasCompletedOnboarding: Bool { didSet { defaults.set(hasCompletedOnboarding, forKey: Keys.hasCompletedOnboarding) } }
 
+    // MARK: Appearance
+
+    /// Accent colour used for buttons, highlights and the hero cards.
+    var accent: ThemeAccent { didSet { defaults.set(accent.rawValue, forKey: Keys.accent) } }
+    /// Light, dark or follow the system setting.
+    var appearance: AppearanceMode { didSet { defaults.set(appearance.rawValue, forKey: Keys.appearance) } }
+    /// Use the rounded system typeface for a softer look.
+    var useRoundedFont: Bool { didSet { defaults.set(useRoundedFont, forKey: Keys.useRoundedFont) } }
+    /// Show the “Say Hey Calendar” pill while passively listening.
+    var showWakeHint: Bool { didSet { defaults.set(showWakeHint, forKey: Keys.showWakeHint) } }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         defaults.register(defaults: [
@@ -59,7 +74,11 @@ final class AppSettings {
             Keys.useSystemAlerts: true,
             Keys.dailyBriefingEnabled: true,
             Keys.dailyBriefingHour: 8,
-            Keys.hasCompletedOnboarding: false
+            Keys.hasCompletedOnboarding: false,
+            Keys.accent: ThemeAccent.indigo.rawValue,
+            Keys.appearance: AppearanceMode.system.rawValue,
+            Keys.useRoundedFont: false,
+            Keys.showWakeHint: true
         ])
         wakeWordEnabled = defaults.bool(forKey: Keys.wakeWordEnabled)
         wakePhrase = defaults.string(forKey: Keys.wakePhrase) ?? AppSettings.defaultWakePhrase
@@ -72,6 +91,10 @@ final class AppSettings {
         dailyBriefingEnabled = defaults.bool(forKey: Keys.dailyBriefingEnabled)
         dailyBriefingHour = defaults.integer(forKey: Keys.dailyBriefingHour)
         hasCompletedOnboarding = defaults.bool(forKey: Keys.hasCompletedOnboarding)
+        accent = ThemeAccent(rawValue: defaults.string(forKey: Keys.accent) ?? "") ?? .indigo
+        appearance = AppearanceMode(rawValue: defaults.string(forKey: Keys.appearance) ?? "") ?? .system
+        useRoundedFont = defaults.bool(forKey: Keys.useRoundedFont)
+        showWakeHint = defaults.bool(forKey: Keys.showWakeHint)
     }
 
     /// The wake phrase, normalized for matching against transcripts.

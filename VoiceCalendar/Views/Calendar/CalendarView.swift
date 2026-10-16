@@ -201,7 +201,7 @@ struct MonthGridView: View {
             if let cgColor = event.calendar?.cgColor {
                 color = Color(cgColor: cgColor)
             } else {
-                color = .accentColor
+                color = .appAccent
             }
             if !seen.contains(color) { seen.append(color) }
             if seen.count == 3 { break }
@@ -223,10 +223,10 @@ private struct DayCell: View {
                 .foregroundStyle(foreground)
                 .frame(width: 36, height: 36)
                 .background(
-                    Circle().fill(isSelected ? Color.accentColor : Color.clear)
+                    Circle().fill(isSelected ? Color.appAccent : Color.clear)
                 )
                 .overlay(
-                    Circle().strokeBorder(isToday && !isSelected ? Color.accentColor : Color.clear, lineWidth: 1.5)
+                    Circle().strokeBorder(isToday && !isSelected ? Color.appAccent : Color.clear, lineWidth: 1.5)
                 )
             HStack(spacing: 3) {
                 ForEach(Array(colors.enumerated()), id: \.offset) { _, color in
@@ -246,7 +246,7 @@ private struct DayCell: View {
 
     private var foreground: Color {
         if isSelected { return .white }
-        if isToday { return .accentColor }
+        if isToday { return .appAccent }
         return .primary
     }
 }

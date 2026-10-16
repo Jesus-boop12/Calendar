@@ -14,11 +14,11 @@ struct OnboardingView: View {
             Spacer(minLength: 12)
             ZStack {
                 Circle()
-                    .fill(Color.accentColor.opacity(0.15))
+                    .fill(Color.appAccent.opacity(0.15))
                     .frame(width: 120, height: 120)
                 Image(systemName: "waveform.and.mic")
                     .font(.system(size: 52, weight: .medium))
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(Color.appAccent)
             }
             VStack(spacing: 8) {
                 Text("Welcome to Voice Calendar")
@@ -94,7 +94,7 @@ private struct FeatureRow: View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: symbol)
                 .font(.title2)
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(Color.appAccent)
                 .frame(width: 32)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)

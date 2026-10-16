@@ -43,7 +43,7 @@ struct RootView: View {
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
                 HStack(alignment: .bottom) {
-                    if assistant.isListeningForWakeWord && !assistant.isOverlayVisible {
+                    if assistant.isListeningForWakeWord && !assistant.isOverlayVisible && settings.showWakeHint {
                         WakeWordPill(phrase: assistant.wakePhraseDisplay)
                             .transition(.opacity)
                     }
@@ -56,6 +56,9 @@ struct RootView: View {
             .animation(.spring(duration: 0.35), value: assistant.isOverlayVisible)
             .animation(.easeInOut(duration: 0.2), value: assistant.isListeningForWakeWord)
         }
+        .tint(Color.appAccent)
+        .preferredColorScheme(settings.appearance.colorScheme)
+        .fontDesign(settings.useRoundedFont ? .rounded : .default)
         .sheet(isPresented: $showOnboarding, onDismiss: { assistant.activateIfPossible() }) {
             OnboardingView()
         }

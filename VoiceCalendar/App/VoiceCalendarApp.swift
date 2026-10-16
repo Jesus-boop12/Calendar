@@ -40,7 +40,6 @@ struct VoiceCalendarApp: App {
                 .environment(permissions)
                 .environment(calendarService)
                 .environment(assistant)
-                .tint(.accentColor)
         }
         .modelContainer(VoiceCalendarApp.sharedContainer)
     }

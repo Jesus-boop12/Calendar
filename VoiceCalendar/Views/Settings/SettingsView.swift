@@ -17,6 +17,23 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section {
+                    AccentPicker(selection: $settings.accent)
+                        .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
+                    Picker("Appearance", selection: $settings.appearance) {
+                        ForEach(AppearanceMode.allCases) { mode in
+                            Text(mode.label).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    Toggle("Rounded typeface", isOn: $settings.useRoundedFont)
+                    Toggle("Show “Say \(assistant.wakePhraseDisplay)” hint", isOn: $settings.showWakeHint)
+                } header: {
+                    Text("Appearance")
+                } footer: {
+                    Text("Your accent colour is used for buttons, today's highlight, the mic button and the next-up card.")
+                }
+
+                Section {
                     Toggle("Listen for wake phrase", isOn: $settings.wakeWordEnabled)
                     HStack {
                         Text("Wake phrase")
@@ -144,6 +161,50 @@ struct SettingsView: View {
         components.hour = hour
         let date = Calendar.current.date(from: components) ?? Date()
         return Formatters.time.string(from: date)
+    }
+}
+
+/// Horizontal row of accent swatches.
+struct AccentPicker: View {
+    @Binding var selection: ThemeAccent
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Accent colour")
+                Spacer()
+                Text(selection.label)
+                    .foregroundStyle(.secondary)
+            }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 14) {
+                    ForEach(ThemeAccent.allCases) { accent in
+                        Button {
+                            withAnimation(.snappy) { selection = accent }
+                        } label: {
+                            ZStack {
+                                Circle()
+                                    .fill(accent.gradient)
+                                    .frame(width: 36, height: 36)
+                                if accent == selection {
+                                    Circle()
+                                        .strokeBorder(Color(.systemBackground), lineWidth: 3)
+                                        .frame(width: 36, height: 36)
+                                    Circle()
+                                        .strokeBorder(accent.color, lineWidth: 2)
+                                        .frame(width: 44, height: 44)
+                                }
+                            }
+                            .frame(width: 44, height: 44)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(accent.label)
+                        .accessibilityAddTraits(accent == selection ? .isSelected : [])
+                    }
+                }
+                .padding(.horizontal, 2)
+            }
+        }
     }
 }
 

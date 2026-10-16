@@ -180,7 +180,7 @@ struct TaskRow: View {
             Button(action: toggle) {
                 Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
                     .font(.title2)
-                    .foregroundStyle(task.isCompleted ? Color.accentColor : Color.secondary)
+                    .foregroundStyle(task.isCompleted ? Color.appAccent : Color.secondary)
                     .contentTransition(.symbolEffect(.replace))
             }
             .buttonStyle(.plain)

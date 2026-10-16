@@ -121,7 +121,7 @@ struct VoiceOverlayView: View {
     private func color(for kind: AssistantResponse.Kind) -> Color {
         switch kind {
         case .success: return .green
-        case .info: return .accentColor
+        case .info: return .appAccent
         case .error: return .red
         }
     }
@@ -136,7 +136,7 @@ struct WaveformView: View {
         HStack(alignment: .center, spacing: 3) {
             ForEach(0..<barCount, id: \.self) { index in
                 Capsule()
-                    .fill(Color.accentColor.gradient)
+                    .fill(Color.appAccent.gradient)
                     .frame(width: 4, height: height(for: index))
             }
         }

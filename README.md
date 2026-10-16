@@ -18,6 +18,7 @@ Built with SwiftUI, SwiftData, EventKit, Speech and UserNotifications. iOS 17+.
 | Delete | “cancel dentist tomorrow”. |
 | Notifications | Alerts before events and reminders (via Calendar/Reminders alarms or the app's own notifications), task-due alerts with a “Mark Done” action, and a morning briefing for the day ahead. |
 | Manual UI | Today dashboard, month calendar, task list (with EventKit reminders), notes, settings and onboarding. |
+| Customisation | Accent colour palettes, light/dark/system appearance, rounded typeface, custom wake phrase, alert timing, morning briefing time. |
 
 ## Project layout
 
@@ -60,6 +61,7 @@ Run the unit tests with **⌘U** (they only need the Simulator).
 
 ## Settings
 
+* **Appearance** — pick one of eight accent palettes (each tuned for light and dark), force light or dark mode or follow the system, and switch to the rounded system typeface.
 * **Wake phrase** — any short phrase; default “Hey Calendar”.
 * **Keep listening in background** — keeps the microphone open after you leave the app (uses the `audio` background mode; the orange microphone indicator stays visible and battery use increases).
 * **Prefer on-device recognition** — private and offline when the device supports it.

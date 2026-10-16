@@ -10,18 +10,16 @@ struct MicButton: View {
             ZStack {
                 if assistant.isListeningForWakeWord {
                     Circle()
-                        .stroke(Color.accentColor.opacity(0.35), lineWidth: 2)
+                        .stroke(Color.appAccent.opacity(0.35), lineWidth: 2)
                         .scaleEffect(pulse ? 1.6 : 1)
                         .opacity(pulse ? 0 : 1)
                         .animation(.easeOut(duration: 1.8).repeatForever(autoreverses: false), value: pulse)
                 }
                 Circle()
                     .fill(
-                        LinearGradient(colors: [Color.accentColor, Color.accentColor.opacity(0.7)],
-                                       startPoint: .topLeading,
-                                       endPoint: .bottomTrailing)
+                        LinearGradient.appAccent
                     )
-                    .shadow(color: Color.accentColor.opacity(0.45), radius: 14, y: 6)
+                    .shadow(color: Color.appAccent.opacity(0.45), radius: 14, y: 6)
                 Image(systemName: iconName)
                     .font(.system(size: 24, weight: .semibold))
                     .foregroundStyle(.white)

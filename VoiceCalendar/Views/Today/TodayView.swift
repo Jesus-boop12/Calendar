@@ -123,8 +123,7 @@ struct TodayView: View {
             .padding(18)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
-                LinearGradient(colors: [Color.accentColor, Color.accentColor.opacity(0.75)],
-                               startPoint: .topLeading, endPoint: .bottomTrailing),
+                LinearGradient.appAccent,
                 in: RoundedRectangle(cornerRadius: 20, style: .continuous)
             )
             .onTapGesture { selectedEvent = EventSelection(event: next) }
@@ -132,7 +131,7 @@ struct TodayView: View {
             HStack(spacing: 12) {
                 Image(systemName: "sparkles")
                     .font(.title2)
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(Color.appAccent)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(events.isEmpty ? "Nothing scheduled today" : "You're done for today")
                         .font(.headline)
@@ -222,7 +221,7 @@ struct TodayView: View {
                 ForEach(assistant.history.prefix(4)) { response in
                     HStack(alignment: .top, spacing: 12) {
                         Image(systemName: response.symbolName)
-                            .foregroundStyle(response.kind == .error ? Color.red : Color.accentColor)
+                            .foregroundStyle(response.kind == .error ? Color.red : Color.appAccent)
                             .frame(width: 24)
                         VStack(alignment: .leading, spacing: 2) {
                             if !response.heard.isEmpty {

@@ -91,7 +91,7 @@ struct EventRow: View {
         if let cgColor = event.calendar?.cgColor {
             return Color(cgColor: cgColor)
         }
-        return .accentColor
+        return .appAccent
     }
 }
 
@@ -116,7 +116,7 @@ struct VoiceTipCard: View {
         HStack(spacing: 14) {
             Image(systemName: "waveform.circle.fill")
                 .font(.system(size: 34))
-                .foregroundStyle(Color.accentColor)
+                .foregroundStyle(Color.appAccent)
             VStack(alignment: .leading, spacing: 4) {
                 Text("Try saying")
                     .font(.caption.weight(.semibold))
