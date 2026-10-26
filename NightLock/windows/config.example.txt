@@ -1,0 +1,33 @@
+# NightLock configuration. Times are 24-hour HH:MM in your PC's local time.
+# The window may cross midnight (start=22:00, end=06:00 is a normal night).
+
+start = 22:00
+end = 06:00
+
+# Nights the lock applies to, by the day the window STARTS on.
+# Weeknights only would be: days = Sun,Mon,Tue,Wed,Thu
+days = Mon,Tue,Wed,Thu,Fri,Sat,Sun
+
+# Minutes before `start` to show a heads-up notification (0 disables).
+warn_minutes = 10
+
+# Allow `nightlock pause <minutes>`? Set to no for a lock with no escape hatch.
+allow_pause = yes
+max_pause_minutes = 15
+
+# Seconds to let an app close politely before it is force-killed.
+grace_seconds = 5
+
+# Show a Windows notification when an app is closed.
+notify = yes
+
+# Apps to block, by process name as shown in Task Manager > Details (without .exe).
+# One per line. Common ones:
+#   chrome, msedge, firefox, brave      browsers
+#   Discord, Slack, Telegram, WhatsApp   chat
+#   steam, EpicGamesLauncher, Battle.net games
+#   Spotify, Netflix, vlc                media
+app = chrome
+app = msedge
+app = Discord
+app = steam
