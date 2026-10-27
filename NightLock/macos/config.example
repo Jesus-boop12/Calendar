@@ -1,0 +1,31 @@
+# Copy to ~/.config/nightlock/config (or run `nightlock edit`).
+# Times are 24-hour HH:MM, local time. The window may cross midnight.
+
+start = 22:00
+end = 06:00
+
+# Nights the lock applies to, named by the day the window starts on.
+# Example for weeknights only: days = Sun,Mon,Tue,Wed,Thu
+days = Mon,Tue,Wed,Thu,Fri,Sat,Sun
+
+# Heads-up notification this many minutes before `start` (0 = off).
+warn_minutes = 10
+
+# `nightlock pause <minutes>` lets you lift the lock briefly.
+# Set allow_pause = no if you want no escape hatch at all.
+allow_pause = yes
+max_pause_minutes = 15
+
+# Seconds an app gets to quit cleanly before it is force-killed.
+grace_seconds = 5
+
+# macOS notification when apps are closed.
+notify = yes
+
+# Apps to block: the name shown in the Dock or Activity Monitor, one per line.
+app = Safari
+app = Google Chrome
+app = Discord
+app = Slack
+app = Messages
+app = Steam
