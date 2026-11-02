@@ -1,0 +1,36 @@
+# NightLock configuration. Times are 24-hour HH:MM, local time. A window may cross
+# midnight: start 22:00 and end 06:00 means "until six the next morning".
+# A night belongs to the day it starts on. The NightLock window edits this file for you.
+
+# Weeknights: nights that start on Sunday, Monday, Tuesday, Wednesday or Thursday.
+weekday_enabled = yes
+weekday_start = 22:00
+weekday_end = 06:00
+
+# Weekend nights: nights that start on Friday or Saturday.
+weekend_enabled = yes
+weekend_start = 23:30
+weekend_end = 08:00
+
+# Minutes before a lock starts to show a heads-up notification (0 disables).
+warn_minutes = 10
+
+# Allow the Pause button / "nightlock pause <minutes>"? no = no escape hatch.
+allow_pause = yes
+max_pause_minutes = 15
+
+# Seconds an app gets to close politely before it is force-killed.
+grace_seconds = 5
+
+# Windows notification when apps are closed.
+notify = yes
+
+# Apps to block, by process name as in Task Manager > Details (without .exe).
+# Common ones: chrome, msedge, firefox, Discord, Slack, steam, Spotify, Netflix, WhatsApp
+app = Discord
+app = steam
+
+# Websites to block in Chrome, Edge and Brave during the lock window.
+# A bare domain covers all its subdomains. Paths work too: reddit.com/r/all
+site = youtube.com
+site = tiktok.com

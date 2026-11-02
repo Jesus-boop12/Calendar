@@ -1,0 +1,352 @@
+#!/bin/bash
+# NightLock - quits distracting apps during a nightly time window on macOS.
+#
+#   nightlock check            run one enforcement pass (the LaunchAgent calls this)
+#   nightlock status           show the window, blocked apps and whether the lock is active
+#   nightlock add "App Name"   add an app (name as shown in the Dock / Activity Monitor)
+#   nightlock remove "App"     remove an app
+#   nightlock pause <minutes>  temporarily lift the lock (only if the config allows it)
+#   nightlock resume           end a pause early
+#   nightlock edit             open the config file in your default editor
+#   nightlock log              tail the log
+#
+# Config lives in ~/.config/nightlock/config (see config.example).
+
+set -u
+
+CONFIG_DIR="${NIGHTLOCK_CONFIG_DIR:-$HOME/.config/nightlock}"
+CONFIG="$CONFIG_DIR/config"
+STATE_DIR="$CONFIG_DIR/state"
+LOG="${NIGHTLOCK_LOG:-$HOME/Library/Logs/nightlock.log}"
+PAUSE_FILE="$STATE_DIR/pause_until"
+WARNED_FILE="$STATE_DIR/warned_on"
+DRY_RUN="${NIGHTLOCK_DRY_RUN:-0}"
+
+mkdir -p "$STATE_DIR" "$(dirname "$LOG")" 2>/dev/null
+
+# ---------- defaults (overridden by the config file) ----------
+START="22:00"
+END="06:00"
+DAYS="Mon,Tue,Wed,Thu,Fri,Sat,Sun"
+WARN_MINUTES=10
+ALLOW_PAUSE="yes"
+MAX_PAUSE_MINUTES=15
+GRACE_SECONDS=5
+NOTIFY="yes"
+APPS=()
+
+log() {
+  printf '%s %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >> "$LOG"
+}
+
+die() { echo "nightlock: $*" >&2; exit 1; }
+
+load_config() {
+  [ -f "$CONFIG" ] || return 0
+  local line key value
+  while IFS= read -r line || [ -n "$line" ]; do
+    line="${line%%#*}"
+    line="$(printf '%s' "$line" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+    [ -z "$line" ] && continue
+    key="${line%%=*}"
+    value="${line#*=}"
+    key="$(printf '%s' "$key" | sed -e 's/[[:space:]]*$//')"
+    value="$(printf '%s' "$value" | sed -e 's/^[[:space:]]*//')"
+    case "$key" in
+      start) START="$value" ;;
+      end) END="$value" ;;
+      days) DAYS="$value" ;;
+      warn_minutes) WARN_MINUTES="$value" ;;
+      allow_pause) ALLOW_PAUSE="$value" ;;
+      max_pause_minutes) MAX_PAUSE_MINUTES="$value" ;;
+      grace_seconds) GRACE_SECONDS="$value" ;;
+      notify) NOTIFY="$value" ;;
+      app) [ -n "$value" ] && APPS[${#APPS[@]}]="$value" ;;
+      *) log "config: unknown key '$key' ignored" ;;
+    esac
+  done < "$CONFIG"
+}
+
+write_default_config() {
+  [ -f "$CONFIG" ] && return 0
+  mkdir -p "$CONFIG_DIR"
+  cat > "$CONFIG" <<'CFG'
+# NightLock configuration. Times are 24-hour HH:MM in your Mac's local time.
+# The window may cross midnight (start=22:00, end=06:00 is a normal night).
+
+start = 22:00
+end = 06:00
+
+# Nights the lock applies to, by the day the window STARTS on.
+days = Mon,Tue,Wed,Thu,Fri,Sat,Sun
+
+# Minutes before `start` to show a heads-up notification (0 disables).
+warn_minutes = 10
+
+# Allow `nightlock pause <minutes>`? Set to no for a lock with no escape hatch.
+allow_pause = yes
+max_pause_minutes = 15
+
+# Seconds to let an app quit politely before it is force-killed.
+grace_seconds = 5
+
+# Show a macOS notification when an app is closed.
+notify = yes
+
+# Apps to block. Use the name shown in the Dock or Activity Monitor, one per line.
+app = Safari
+app = Google Chrome
+app = Discord
+app = Slack
+CFG
+  log "created default config at $CONFIG"
+}
+
+# ---------- time helpers ----------
+hm_to_minutes() {
+  local t="$1" h m
+  case "$t" in
+    [0-9]:[0-9][0-9]|[0-9][0-9]:[0-9][0-9]) ;;
+    *) die "bad time '$t' in config (use HH:MM)" ;;
+  esac
+  h="${t%%:*}"; m="${t##*:}"
+  echo $(( 10#$h * 60 + 10#$m ))
+}
+
+# NIGHTLOCK_NOW="HH:MM Day" can override the clock for testing.
+now_minutes() {
+  if [ -n "${NIGHTLOCK_NOW:-}" ]; then
+    hm_to_minutes "${NIGHTLOCK_NOW%% *}"
+  else
+    echo $(( 10#$(date +%H) * 60 + 10#$(date +%M) ))
+  fi
+}
+
+today_name() {
+  if [ -n "${NIGHTLOCK_NOW:-}" ]; then echo "${NIGHTLOCK_NOW##* }"; else date +%a; fi
+}
+
+yesterday_name() {
+  local d="$1" days="Mon Tue Wed Thu Fri Sat Sun" prev="Sun" x
+  for x in $days; do
+    [ "$x" = "$d" ] && { echo "$prev"; return; }
+    prev="$x"
+  done
+  echo "Sun"
+}
+
+day_enabled() {
+  local day="$1"
+  case ",$DAYS," in
+    *",$day,"*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# Returns 0 when the lock window is active right now (ignoring pauses).
+in_window() {
+  local now start end today
+  now="$(now_minutes)"; start="$(hm_to_minutes "$START")"; end="$(hm_to_minutes "$END")"
+  today="$(today_name)"
+  if [ "$start" -lt "$end" ]; then
+    [ "$now" -ge "$start" ] && [ "$now" -lt "$end" ] && day_enabled "$today"
+  elif [ "$start" -gt "$end" ]; then
+    if [ "$now" -ge "$start" ]; then
+      day_enabled "$today"
+    elif [ "$now" -lt "$end" ]; then
+      day_enabled "$(yesterday_name "$today")"
+    else
+      return 1
+    fi
+  else
+    return 1   # start == end means a zero-length window: never lock
+  fi
+}
+
+# Returns 0 when we are within WARN_MINUTES before the window starts today.
+in_warning_period() {
+  local now start
+  [ "${WARN_MINUTES:-0}" -gt 0 ] || return 1
+  now="$(now_minutes)"; start="$(hm_to_minutes "$START")"
+  day_enabled "$(today_name)" || return 1
+  [ "$now" -lt "$start" ] && [ $(( start - now )) -le "$WARN_MINUTES" ]
+}
+
+minutes_until_end() {
+  local now end
+  now="$(now_minutes)"; end="$(hm_to_minutes "$END")"
+  if [ "$now" -lt "$end" ]; then echo $(( end - now )); else echo $(( 1440 - now + end )); fi
+}
+
+paused() {
+  [ -f "$PAUSE_FILE" ] || return 1
+  local until now
+  until="$(cat "$PAUSE_FILE" 2>/dev/null || echo 0)"
+  now="$(date +%s)"
+  if [ "$until" -gt "$now" ] 2>/dev/null; then return 0; fi
+  rm -f "$PAUSE_FILE"
+  return 1
+}
+
+# ---------- macOS actions ----------
+notify() {
+  [ "$NOTIFY" = "yes" ] || return 0
+  [ "$DRY_RUN" = "1" ] && { echo "[dry-run] notify: $1 - $2"; return 0; }
+  command -v osascript >/dev/null 2>&1 || return 0
+  local title body
+  title="$(printf '%s' "$1" | sed 's/"/\\"/g')"
+  body="$(printf '%s' "$2" | sed 's/"/\\"/g')"
+  osascript -e "display notification \"$body\" with title \"$title\"" >/dev/null 2>&1 || true
+}
+
+app_running() {
+  local app="$1"
+  pgrep -x "$app" >/dev/null 2>&1 && return 0
+  pgrep -f "/$app.app/Contents/MacOS/" >/dev/null 2>&1 && return 0
+  return 1
+}
+
+quit_app() {
+  local app="$1" waited=0
+  if [ "$DRY_RUN" = "1" ]; then echo "[dry-run] would quit: $app"; return 0; fi
+  # Ask nicely first so the app can save state, then force it.
+  osascript -e "tell application \"$app\" to quit" >/dev/null 2>&1 &
+  local osa_pid=$!
+  while [ "$waited" -lt "$GRACE_SECONDS" ] && app_running "$app"; do
+    sleep 1; waited=$(( waited + 1 ))
+  done
+  kill "$osa_pid" 2>/dev/null; wait "$osa_pid" 2>/dev/null
+  if app_running "$app"; then
+    pkill -x "$app" 2>/dev/null
+    pkill -f "/$app.app/Contents/MacOS/" 2>/dev/null
+    sleep 1
+    if app_running "$app"; then
+      pkill -9 -x "$app" 2>/dev/null
+      pkill -9 -f "/$app.app/Contents/MacOS/" 2>/dev/null
+    fi
+  fi
+}
+
+# ---------- commands ----------
+cmd_check() {
+  write_default_config
+  load_config
+  [ ${#APPS[@]} -gt 0 ] || { log "no apps configured"; return 0; }
+
+  if in_window; then
+    rm -f "$WARNED_FILE"
+    if paused; then return 0; fi
+    local app closed=""
+    for app in "${APPS[@]}"; do
+      if app_running "$app"; then
+        quit_app "$app"
+        closed="$closed, $app"
+        log "closed $app (window $START-$END)"
+      fi
+    done
+    if [ -n "$closed" ]; then
+      closed="${closed#, }"
+      notify "NightLock" "Closed $closed. Unlocks at $END."
+    fi
+  elif in_warning_period; then
+    local today; today="$(date +%Y-%m-%d)"
+    if [ "$(cat "$WARNED_FILE" 2>/dev/null)" != "$today" ]; then
+      notify "NightLock" "Distracting apps lock at $START. Wrap up what you're doing."
+      log "sent warning for $START lock"
+      [ "$DRY_RUN" = "1" ] || echo "$today" > "$WARNED_FILE"
+    fi
+  fi
+}
+
+cmd_status() {
+  write_default_config
+  load_config
+  echo "NightLock"
+  echo "  window : $START -> $END  (nights: $DAYS)"
+  echo "  config : $CONFIG"
+  echo "  log    : $LOG"
+  if in_window; then
+    if paused; then
+      echo "  state  : PAUSED until $(date -r "$(cat "$PAUSE_FILE")" '+%H:%M' 2>/dev/null || date -d "@$(cat "$PAUSE_FILE")" '+%H:%M')"
+    else
+      echo "  state  : LOCKED ($(minutes_until_end) min left)"
+    fi
+  else
+    echo "  state  : unlocked"
+  fi
+  echo "  agent  : $(launchctl list 2>/dev/null | grep -q com.nightlock.agent && echo loaded || echo 'NOT loaded (run install.sh)')"
+  echo "  apps   :"
+  local app
+  for app in "${APPS[@]}"; do
+    if app_running "$app"; then echo "    - $app (running)"; else echo "    - $app"; fi
+  done
+}
+
+cmd_add() {
+  [ $# -ge 1 ] || die "usage: nightlock add \"App Name\""
+  write_default_config
+  local app="$*"
+  if grep -qiE "^[[:space:]]*app[[:space:]]*=[[:space:]]*$(printf '%s' "$app" | sed 's/[][\.*^$/]/\\&/g')[[:space:]]*$" "$CONFIG"; then
+    echo "$app is already blocked"; return 0
+  fi
+  printf 'app = %s\n' "$app" >> "$CONFIG"
+  echo "added $app"
+}
+
+cmd_remove() {
+  [ $# -ge 1 ] || die "usage: nightlock remove \"App Name\""
+  write_default_config
+  local app="$*" esc tmp
+  esc="$(printf '%s' "$app" | sed 's/[][\.*^$/]/\\&/g')"
+  tmp="$(mktemp)"
+  grep -viE "^[[:space:]]*app[[:space:]]*=[[:space:]]*${esc}[[:space:]]*$" "$CONFIG" > "$tmp"
+  if cmp -s "$tmp" "$CONFIG"; then rm -f "$tmp"; echo "$app was not in the list"; return 0; fi
+  mv "$tmp" "$CONFIG"
+  echo "removed $app"
+}
+
+cmd_pause() {
+  write_default_config
+  load_config
+  [ "$ALLOW_PAUSE" = "yes" ] || die "pausing is disabled in $CONFIG (allow_pause = no)"
+  local minutes="${1:-}"
+  case "$minutes" in ''|*[!0-9]*) die "usage: nightlock pause <minutes>" ;; esac
+  [ "$minutes" -gt 0 ] || die "minutes must be at least 1"
+  [ "$minutes" -le "$MAX_PAUSE_MINUTES" ] || die "max pause is $MAX_PAUSE_MINUTES minutes (max_pause_minutes in config)"
+  echo $(( $(date +%s) + minutes * 60 )) > "$PAUSE_FILE"
+  log "paused for $minutes min"
+  echo "NightLock paused for $minutes minutes."
+}
+
+cmd_resume() {
+  rm -f "$PAUSE_FILE"
+  log "pause ended manually"
+  echo "NightLock resumed."
+}
+
+cmd_edit() {
+  write_default_config
+  "${EDITOR:-open -t}" "$CONFIG"
+}
+
+cmd_log() {
+  touch "$LOG"
+  tail -n "${1:-40}" "$LOG"
+}
+
+usage() {
+  sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'
+}
+
+case "${1:-}" in
+  check) cmd_check ;;
+  status) cmd_status ;;
+  add) shift; cmd_add "$@" ;;
+  remove|rm) shift; cmd_remove "$@" ;;
+  pause) shift; cmd_pause "$@" ;;
+  resume|unpause) cmd_resume ;;
+  edit) cmd_edit ;;
+  log) shift; cmd_log "$@" ;;
+  -h|--help|help|'') usage ;;
+  *) die "unknown command '$1' (try: nightlock help)" ;;
+esac
